@@ -1,9 +1,9 @@
-//const int button = 2;
+const int button = 2;
 const int buzzer = 8;
 int buttonState = 0;
 
 void setup() {
-  pinMode(2,INPUT);
+  pinMode(button,INPUT);
   pinMode(buzzer, OUTPUT); // Ustaw głośnik jako wyjście.
   Serial.begin(9600);
 }
