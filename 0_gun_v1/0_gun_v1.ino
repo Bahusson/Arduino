@@ -20,6 +20,7 @@ Servo barrel; // Stwórz obiekt serwo, który będziesz kontrolował.
 AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
 
 int power_lvl = 0;
+int val = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -35,9 +36,10 @@ void loop() {
   // put your main code here, to run repeatedly:
   LED_loader();
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu.
-  delay(100);
-  if (power_lvl == 100){
+  delay(200); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
+  if (power_lvl == 100){ //co się dzieje po pełnym naładowaniu.
     power_lvl = 0;
+    LED_shot();
   }
 }
 
@@ -46,7 +48,7 @@ void loop() {
 void barrel_load_pos() {
   barrel.write(0);
 }
-//Głowica w pozycji do ładowania
+//Głowica w pozycji do strzału
 void barrel_shot_pos() {
   barrel.write(85);
 }
@@ -57,8 +59,9 @@ void LED_loader() {
   LEDcurb(99, 66, power_lvl, LEDpin3); // Na końcu dodawaj do 11
   
 }
-// Funkcja zwracająca mapująca dla LED-ów
+// Funkcja mapująca dla LED-ów
 void LEDcurb(int curb,int mod, int p_lvl,int pin) {
+  
   if (p_lvl > curb){
     p_lvl = curb;
   }
@@ -72,4 +75,28 @@ void LEDcurb(int curb,int mod, int p_lvl,int pin) {
   }
   int mappedvalue = map(pinpower, 0, mapfrom, 0, 255);
   analogWrite(pin, mappedvalue);
+}
+// Zestaw LED-ów symuluje 'wystrzał'
+void LED_shot() {
+  //powoli gaśnie do 10%
+  for (val = 255; val >=10; val-=1){
+  analogWrite(LEDpin1, val);
+  analogWrite(LEDpin2, val);
+  analogWrite(LEDpin3, val);
+  delay(5);
   }
+  //Szybko zapala się na 100%
+  for (val = 0; val <=255; val +=5){
+  analogWrite(LEDpin1, val);
+  analogWrite(LEDpin2, val);
+  analogWrite(LEDpin3, val);
+  delay(1);
+  }
+  //powoli gaśnie do 0%
+  for (val = 255; val >=0; val-=1){
+  analogWrite(LEDpin1, val);
+  analogWrite(LEDpin2, val);
+  analogWrite(LEDpin3, val);
+  delay(5);
+  }
+}
