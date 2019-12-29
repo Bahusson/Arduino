@@ -124,3 +124,16 @@ void Shot() {
   delay(1500);
   barrel_load_pos();
 }
+// Odgłos sygnalizuje nienaładowanie zestawu.
+void buzz_nought(){
+  int n_buzz_val = 350;
+  int b_del = 100;
+  tone(buzzPin, n_buzz_val);
+  delay(b_del);
+  noTone(buzzPin);
+  delay(b_del);
+  tone(buzzPin, n_buzz_val);
+  delay(b_del);
+  noTone(buzzPin);
+  delay(b_del);
+}

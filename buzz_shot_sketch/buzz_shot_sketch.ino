@@ -4,7 +4,8 @@ int val = 0;
 void setup() {
   // put your setup code here, to run once:
   pinMode(buzzPin, OUTPUT);
-  buzz_shot();
+  //buzz_shot();
+  buzz_nought();
 }
 
 void loop() {
@@ -22,4 +23,16 @@ void buzz_shot(){
   }
   noTone(buzzPin);
   delay(2000);
+}
+void buzz_nought(){
+  int n_buzz_val = 350;
+  int b_del = 100;
+  tone(buzzPin, n_buzz_val);
+  delay(b_del);
+  noTone(buzzPin);
+  delay(b_del);
+  tone(buzzPin, n_buzz_val);
+  delay(b_del);
+  noTone(buzzPin);
+  delay(b_del);
 }
