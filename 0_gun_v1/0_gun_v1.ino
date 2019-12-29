@@ -4,9 +4,9 @@
 
 //DEFINICJE pinów
 //LEDy
-#define LEDpin1  3  // IN3 on PWM LED1
-#define LEDpin2  5  // IN5 on PWM LED2
-#define LEDpin3  11  // IN6 on PWM LED3
+#define LEDpin1  3
+#define LEDpin2  5
+#define LEDpin3  11
 //StepperMotor
 #define motorPin1  7     // IN1 on the ULN2003 driver 1
 #define motorPin2  8     // IN2 on the ULN2003 driver 1
@@ -18,7 +18,6 @@
 Servo barrel; // Stwórz obiekt serwo, który będziesz kontrolował.
 //StepperMotor
 AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
-
 //Buzzer
 const int buzzPin = 2; // IN2 on buzzer
 
@@ -107,8 +106,13 @@ void LED_shot() {
 }
 // Głośnik symuluje 'wystrzał'
 void buzz_shot() {
+  int buzz_del = 10;
   tone(buzzPin, 100);
-  delay(100);
+  delay(buzz_del);
+  tone(buzzPin, 200);
+  delay(buzz_del);
+  tone(buzzPin, 300);
+  delay(buzz_del);
   noTone(buzzPin);
   delay(100);
 }
