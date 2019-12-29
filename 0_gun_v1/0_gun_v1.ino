@@ -19,6 +19,9 @@ Servo barrel; // Stwórz obiekt serwo, który będziesz kontrolował.
 //StepperMotor
 AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
 
+//Buzzer
+const int buzzPin = 2; // IN2 on buzzer
+
 int power_lvl = 0;
 int val = 0;
 
@@ -29,6 +32,7 @@ void setup() {
   rotator.setMaxSpeed(200); // Parametry rotatora ustawione eksperymentalnie.
   rotator.setSpeed(200);
   rotator.setAcceleration(100.0);
+  pinMode(buzzPin, OUTPUT);
 
 }
 
@@ -39,7 +43,7 @@ void loop() {
   delay(200); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
   if (power_lvl == 100){ //co się dzieje po pełnym naładowaniu.
     power_lvl = 0;
-    LED_shot();
+    Shot();
   }
 }
 
@@ -92,6 +96,7 @@ void LED_shot() {
   analogWrite(LEDpin3, val);
   delay(1);
   }
+  buzz_shot();
   //powoli gaśnie do 0%
   for (val = 255; val >=0; val-=1){
   analogWrite(LEDpin1, val);
@@ -99,4 +104,19 @@ void LED_shot() {
   analogWrite(LEDpin3, val);
   delay(5);
   }
+}
+// Głośnik symuluje 'wystrzał'
+void buzz_shot() {
+  tone(buzzPin, 100);
+  delay(100);
+  noTone(buzzPin);
+  delay(100);
+}
+// Pełna sekwencja wystrzału.
+void Shot() {
+  barrel_shot_pos();
+  delay(1000);
+  LED_shot(); //Zawiera buzz_shot();
+  delay(1500);
+  barrel_load_pos();
 }
