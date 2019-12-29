@@ -106,15 +106,15 @@ void LED_shot() {
 }
 // Głośnik symuluje 'wystrzał'
 void buzz_shot() {
-  int buzz_del = 10;
-  tone(buzzPin, 100);
-  delay(buzz_del);
-  tone(buzzPin, 200);
-  delay(buzz_del);
-  tone(buzzPin, 300);
-  delay(buzz_del);
+  for (val = 150; val <=900; val+=30){
+  tone(buzzPin, val); 
+  delay(4);
+  }
+  for (val = 900; val >=0; val-=60){
+  tone(buzzPin, val); 
+  delay(20);
+  }
   noTone(buzzPin);
-  delay(100);
 }
 // Pełna sekwencja wystrzału.
 void Shot() {
