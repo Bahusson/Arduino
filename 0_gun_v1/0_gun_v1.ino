@@ -1,7 +1,6 @@
 //IMPORTY
 #include <Servo.h> //ściągnij bibliotekę obsługującą serwo
 #include <AccelStepper.h> //ściągnij bibliotekę obsługującą silnik krokowy 
-#include <pRNG.h> // Ściągnij generator liczb pseudolosowych
 
 //DEFINICJE pinów
 //LEDy
@@ -23,16 +22,12 @@ AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, m
 const int buzzPin = 2;   // Buzzer pin.
 const int buttonPin = 4; // Button pin.
 
-//pRNG
-pRNG prng;
-
 int buttonState = 0;
 int power_lvl = 0;
 int val = 0;
 
 void setup() {
   Serial.begin(9600);
-  prng.begin(); // Odpal generator liczb pseudolosowych.
   barrel.attach(6); // Przyporządkuj obiekt serwa "barrel" do pinu RWM 6.
   barrel_load_pos(); // Głowica na pozycję 0 po starcie programu.
   rotator.setMaxSpeed(200); // Parametry rotatora ustawione eksperymentalnie.
@@ -40,7 +35,7 @@ void setup() {
   rotator.setAcceleration(100.0);
   pinMode(buzzPin, OUTPUT);
   pinMode(buttonPin, INPUT);
-
+  randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
 }
 
 void loop() {
@@ -160,9 +155,3 @@ void dem_shot(){
     }
  }
 }
-// Mapper liczb pseudolosowych.
-void num_random(int valto, int valtotal){
-    byte valrandom = prng.getRndByte();
-    int mappedvalue = map(valrandom, 0, 255, 0, valtotal);
-}
-// 
