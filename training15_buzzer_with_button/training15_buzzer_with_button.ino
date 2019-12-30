@@ -1,5 +1,5 @@
-const int button = 2;
-const int buzzer = 8;
+const int button = 4;
+const int buzzer = 2;
 int buttonState = 0;
 
 void setup() {

@@ -19,8 +19,10 @@ Servo barrel; // Stwórz obiekt serwo, który będziesz kontrolował.
 //StepperMotor
 AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
 //Buzzer
-const int buzzPin = 2; // IN2 on buzzer
+const int buzzPin = 2;   // Buzzer pin.
+const int buttonPin = 4; // Button pin.
 
+int buttonState = 0;
 int power_lvl = 0;
 int val = 0;
 
@@ -32,6 +34,7 @@ void setup() {
   rotator.setSpeed(200);
   rotator.setAcceleration(100.0);
   pinMode(buzzPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
 
 }
 
@@ -40,8 +43,8 @@ void loop() {
   LED_loader();
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu.
   delay(200); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
+  dem_shot();
   if (power_lvl == 100){ //co się dzieje po pełnym naładowaniu.
-    power_lvl = 0;
     Shot();
   }
 }
@@ -123,6 +126,7 @@ void Shot() {
   LED_shot(); //Zawiera buzz_shot();
   delay(1500);
   barrel_load_pos();
+  power_lvl = 0;
 }
 // Odgłos sygnalizuje nienaładowanie zestawu.
 void buzz_nought(){
@@ -136,4 +140,18 @@ void buzz_nought(){
   delay(b_del);
   noTone(buzzPin);
   delay(b_del);
+}
+// Strzał na żądanie z ryzykiem (guzik)
+void dem_shot(){
+  buttonState = digitalRead(buttonPin);
+  if (buttonState == HIGH && power_lvl >= 70) {
+    Shot();
+  }
+  if (buttonState == HIGH && power_lvl < 70) {
+    buzz_nought();
+    power_lvl = power_lvl - 16;
+   if (power_lvl < 0) {
+     power_lvl = 0;
+    }
+ }
 }
