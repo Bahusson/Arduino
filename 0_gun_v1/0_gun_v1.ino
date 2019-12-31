@@ -46,8 +46,12 @@ void loop() {
   if(power_lvl < 99){ 
   delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
   }
+  if (power_lvl == 100){
+    rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
+  }
   Serial.println(power_lvl);
   if (power_lvl > 2500){
+    rotator.disableOutputs(); // Odetnij prąd od silnika krokowego, żeby się nie grzał.
     //Sprawdź, czy nic się nie rusza.
     delay(1000);
     Shot();
@@ -191,7 +195,7 @@ void rotator_search() {
 //    rotator.moveTo(superposition());  // Rusz się.
 //  }
 //    rotator.run();
-  rotator.moveTo(myposition);
+  rotator.move(myposition);
   rotator.run();
  }
 }
