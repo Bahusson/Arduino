@@ -12,6 +12,9 @@
 #define motorPin2  8     // IN2 on the ULN2003 driver 1
 #define motorPin3  12     // IN3 on the ULN2003 driver 1
 #define motorPin4  13     // IN4 on the ULN2003 driver 1
+//UltrasonicDistanceSensor
+#define trigPin 10
+#define echoPin 9
 
 //ZMIENNE GLOBALNE
 //Servo
@@ -26,6 +29,7 @@ const int buttonPin = 4; // Button pin.
 int buttonState = 0;
 int power_lvl = 0;
 int val = 0;
+int saveddistance = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -34,6 +38,8 @@ void setup() {
   rotator.setMaxSpeed(200); // Parametry rotatora ustawione eksperymentalnie.
   rotator.setSpeed(200);
   rotator.setAcceleration(100.0);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
   pinMode(buzzPin, OUTPUT);
   pinMode(buttonPin, INPUT);
   randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
@@ -42,6 +48,8 @@ void setup() {
 void loop() {
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
+  //Serial.println("moc wynosi: ");
+  Serial.println(power_lvl);
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
   if(power_lvl < 99){ 
   delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
@@ -49,29 +57,22 @@ void loop() {
   if (power_lvl == 100){
     rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
   }
-  Serial.println(power_lvl);
   if (power_lvl > 2500){
     rotator.disableOutputs(); // Odetnij prąd od silnika krokowego, żeby się nie grzał.
-    //Sprawdź, czy nic się nie rusza.
-    delay(1000);
-    Shot();
+    //Sprawdź, czy nic się nie rusza przez 1-5 minut.
+    byte stubborn = random(2,6);
+    long determination = stubborn * 12; // ; W produkcji daj 120 (minuty)!
+    while (determination > 0 && power_lvl > 100) {
+    determination-=1;
+    //Serial.println(determination);
+    ultrasonic();
+    }
+    if (determination == 0){
+      Shot(); // Jeśli nic się nie pojawi, wal na oślep!
+    }
   }
   dem_shot();
   rotator_search();
-  //if (power_lvl == 100){ // Po pełnim naładowaniu działko "szuka" celu z coraz mniejszą zawziętością.
-    
-    //delay(10000);
-    //byte stubborn = random(2,5);
-    //Serial.println(stubborn);
-    //while (stubborn > 0) {
-    // long determination = stubborn * 1000; // 60000; W produkcji daj minutę!
-    // stubborn-=1;
-    // Serial.println(determination);
-    // delay(determination);
-    // rotator_search();
-    //}
-    //Shot();
-  //}
 }
 
 //FUNKCJE
@@ -191,10 +192,6 @@ void dem_shot(){
 void rotator_search() {
    int myposition = superposition();
    if (power_lvl > 99 && power_lvl < 100 + myposition){
-//  if (rotator.distanceToGo() == 0) {  // Tylko po zakończeniu poprzedniego ruchu
-//    rotator.moveTo(superposition());  // Rusz się.
-//  }
-//    rotator.run();
   rotator.move(myposition);
   rotator.run();
  }
@@ -212,4 +209,32 @@ int superposition() {
     superpos = dist;
   }
   return superpos;
+}
+
+// Czujnik ultradźwiękowy.
+void ultrasonic() {
+  long duration, distance;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
+  distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
+  int res = 2; // Ustaw czułość
+
+  if (saveddistance > 0 && saveddistance < 400) {
+    if (saveddistance - distance >= res or saveddistance - distance <= -res){
+      Shot();
+    }
+  }
+  if (distance >= 400 || distance <= 0){
+   Serial.println("Out of range");
+   }
+  else {
+   Serial.print(distance);
+   Serial.println(" cm");
+   }
+  delay(500);
+  saveddistance = distance;
 }
