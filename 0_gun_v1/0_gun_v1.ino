@@ -40,13 +40,34 @@ void setup() {
 }
 
 void loop() {
+  // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
-  delay(200); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
-  dem_shot();
-  if (power_lvl == 100){ //co się dzieje po pełnym naładowaniu.
+  if(power_lvl < 99){ 
+  delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
+  }
+  Serial.println(power_lvl);
+  if (power_lvl > 2500){
+    //Sprawdź, czy nic się nie rusza.
+    delay(1000);
     Shot();
   }
+  dem_shot();
+  rotator_search();
+  //if (power_lvl == 100){ // Po pełnim naładowaniu działko "szuka" celu z coraz mniejszą zawziętością.
+    
+    //delay(10000);
+    //byte stubborn = random(2,5);
+    //Serial.println(stubborn);
+    //while (stubborn > 0) {
+    // long determination = stubborn * 1000; // 60000; W produkcji daj minutę!
+    // stubborn-=1;
+    // Serial.println(determination);
+    // delay(determination);
+    // rotator_search();
+    //}
+    //Shot();
+  //}
 }
 
 //FUNKCJE
@@ -65,7 +86,6 @@ void LED_loader() {
   LEDcurb(33, 0, power_lvl, LEDpin1); // Dodawaj najpierw do 9
   LEDcurb(66, 33, power_lvl, LEDpin2); // Potem dodawaj do 10
   LEDcurb(99, 66, power_lvl, LEDpin3); // Na końcu dodawaj do 11
-  
 }
 
 // Funkcja mapująca dla LED-ów
@@ -165,17 +185,21 @@ void dem_shot(){
 
 //Silnik krokowy szuka i zatrzymuje się.
 void rotator_search() {
-  if (rotator.distanceToGo() == 0) {           // If position reached...
-    rotator.moveTo(superposition());
-  }
-    rotator.run();                  // Call run() as often as possible
+   int myposition = superposition();
+   if (power_lvl > 99 && power_lvl < 100 + myposition){
+//  if (rotator.distanceToGo() == 0) {  // Tylko po zakończeniu poprzedniego ruchu
+//    rotator.moveTo(superposition());  // Rusz się.
+//  }
+//    rotator.run();
+  rotator.moveTo(myposition);
+  rotator.run();
+ }
 }
 
 // Zwraca losową 'superpozycję' dla silnika krokowego. ;)
 int superposition() {
   byte flip = random(2); // Wylosuj, czy ruszy się w prawo czy w lewo.
-  int dist = random(250, 1500); //Wylosuj odległość na którą obróci się wieża.
-  Serial.println(dist);
+  int dist = random(250, 2500); //Wylosuj odległość na którą obróci się wieża.
   int superpos = 0;
   if (flip == 0){
     superpos = -dist;
