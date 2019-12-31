@@ -20,6 +20,7 @@ Servo barrel; // Stwórz obiekt serwo, który będziesz kontrolował.
 AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
 //Buzzer
 const int buzzPin = 2;   // Buzzer pin.
+//Przycisk
 const int buttonPin = 4; // Button pin.
 
 int buttonState = 0;
@@ -39,9 +40,8 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   LED_loader();
-  power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu.
+  power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
   delay(200); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
   dem_shot();
   if (power_lvl == 100){ //co się dzieje po pełnym naładowaniu.
@@ -54,10 +54,12 @@ void loop() {
 void barrel_load_pos() {
   barrel.write(0);
 }
+
 //Głowica w pozycji do strzału
 void barrel_shot_pos() {
   barrel.write(85);
 }
+
 // Zestaw LED-ów 'ładuje' się
 void LED_loader() {
   LEDcurb(33, 0, power_lvl, LEDpin1); // Dodawaj najpierw do 9
@@ -65,9 +67,9 @@ void LED_loader() {
   LEDcurb(99, 66, power_lvl, LEDpin3); // Na końcu dodawaj do 11
   
 }
+
 // Funkcja mapująca dla LED-ów
-void LEDcurb(int curb,int mod, int p_lvl,int pin) {
-  
+void LEDcurb(int curb,int mod, int p_lvl,int pin) { 
   if (p_lvl > curb){
     p_lvl = curb;
   }
@@ -82,6 +84,7 @@ void LEDcurb(int curb,int mod, int p_lvl,int pin) {
   int mappedvalue = map(pinpower, 0, mapfrom, 0, 255);
   analogWrite(pin, mappedvalue);
 }
+
 // Zestaw LED-ów symuluje 'wystrzał'
 void LED_shot() {
   //powoli gaśnie do 10%
@@ -107,6 +110,7 @@ void LED_shot() {
   delay(5);
   }
 }
+
 // Głośnik symuluje 'wystrzał'
 void buzz_shot() {
   for (val = 150; val <=900; val+=30){
@@ -119,6 +123,7 @@ void buzz_shot() {
   }
   noTone(buzzPin);
 }
+
 // Pełna sekwencja wystrzału.
 void Shot() {
   barrel_shot_pos();
@@ -128,6 +133,7 @@ void Shot() {
   barrel_load_pos();
   power_lvl = 0;
 }
+
 // Odgłos sygnalizuje nienaładowanie zestawu.
 void buzz_nought(){
   int n_buzz_val = 350;
@@ -141,6 +147,7 @@ void buzz_nought(){
   noTone(buzzPin);
   delay(b_del);
 }
+
 // Strzał na żądanie z ryzykiem (guzik)
 void dem_shot(){
   buttonState = digitalRead(buttonPin);
@@ -154,4 +161,27 @@ void dem_shot(){
      power_lvl = 0;
     }
  }
+}
+
+//Silnik krokowy szuka i zatrzymuje się.
+void rotator_search() {
+  if (rotator.distanceToGo() == 0) {           // If position reached...
+    rotator.moveTo(superposition());
+  }
+    rotator.run();                  // Call run() as often as possible
+}
+
+// Zwraca losową 'superpozycję' dla silnika krokowego. ;)
+int superposition() {
+  byte flip = random(2); // Wylosuj, czy ruszy się w prawo czy w lewo.
+  int dist = random(250, 1500); //Wylosuj odległość na którą obróci się wieża.
+  Serial.println(dist);
+  int superpos = 0;
+  if (flip == 0){
+    superpos = -dist;
+  }
+  else{
+    superpos = dist;
+  }
+  return superpos;
 }
