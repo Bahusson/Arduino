@@ -175,6 +175,7 @@ void buzz_nought(){
 
 // Strzał na żądanie z ryzykiem (guzik)
 void dem_shot(){
+  rotator.disableOutputs();
   buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH && power_lvl >= 70) {
     Shot();
