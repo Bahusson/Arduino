@@ -62,20 +62,29 @@ void setup() {
   pinMode(lightPin, OUTPUT);
   pinMode(weatherPin, OUTPUT);
   pinMode(boosterPin, OUTPUT);
+  //digitalWrite(lightPin, HIGH);
+  //digitalWrite(weatherPin, HIGH);
 }
 
 void loop() {
-  int photValue = analogRead(A2); // Zczytaj wartość z fotorezystora.
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
-  //Serial.println(power_lvl);
-  power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
+  int photvalue = analogRead(A2);
+  byte flipval = random (60, 80)
+  byte power_flip = random(100);
+  if (power_flip < flipval){
+    power_lvl++; //Dodaj 1 do poziomu naładowania z 75% prawdopodobieństwem.
+  }
+  Serial.println(power_lvl);
+  //Serial.println(photvalue);
   if(power_lvl < 99){ 
-    delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
-    if (dedication == 0) {
+    delay(100); // Domyślne opóźnienie ładowania w ms - do dostosowania w produkcji.
+    light_switch(500, photvalue);
+    if (dedication == 0) { // Opóźnienie na 1% ładowania
       delay(500);
-      Serial.println("no dedication bonus");
     }
+    // Tutaj wstaw warunki dla opóźniacza temperatury i wilgotności.
+    
   }
   if (power_lvl == 100){
     rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
@@ -96,7 +105,7 @@ void loop() {
   human_booster();
   dem_shot();
   rotator_search();
-  Serial.println(dedication);
+  //Serial.println(dedication);
 }
 
 //void(* resetFunc) (void) = 0; // Funkcja resetuje pamięć Arduino po strzale, bo inaczej głupieje.
@@ -289,6 +298,12 @@ void ultrasonic() {
   saveddistance = distance;
 }
 
-//void weather_levels() {
-//
-//}
+void light_switch(int delay_time, int photval) {
+    if (photval > 400){
+      digitalWrite(lightPin, LOW);
+      delay(delay_time);
+    }
+    else {
+      digitalWrite(lightPin, HIGH);
+    }
+}
