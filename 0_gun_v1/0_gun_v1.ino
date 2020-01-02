@@ -7,10 +7,14 @@
 #include <DHT_U.h>
 
 //DEFINICJE pinów
-//LEDy
+//LEDy "głowicy"
 #define LEDpin1  3
 #define LEDpin2  5
 #define LEDpin3  11
+//LEDy "indykatory"
+#define lightPin A5
+#define weatherPin A4
+#define boosterPin A3
 //StepperMotor
 #define motorPin1  7     // IN1 on the ULN2003 driver 1
 #define motorPin2  8     // IN2 on the ULN2003 driver 1
@@ -40,6 +44,7 @@ int buttonState = 0;
 int power_lvl = 0;
 int val = 0;
 int saveddistance = 0;
+int dedication = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -54,17 +59,19 @@ void setup() {
   pinMode(buttonPin, INPUT); // Pin przycisku "na żądanie".
   randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
   dht.begin(); // Zainicjalizuj DHT.
+  pinMode(lightPin, OUTPUT);
+  pinMode(weatherPin, OUTPUT);
+  pinMode(boosterPin, OUTPUT);
 }
 
 void loop() {
   int photValue = analogRead(A2); // Zczytaj wartość z fotorezystora.
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
-  Serial.println(photValue);
   //Serial.println(power_lvl);
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
   if(power_lvl < 99){ 
-  delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
+    delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
   }
   if (power_lvl == 100){
     rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
@@ -76,15 +83,16 @@ void loop() {
     long determination = stubborn * 12; // ; W produkcji daj 120 (minuty)!
     while (determination > 0 && power_lvl > 100) {
     determination-=1;
-    //Serial.println(determination);
     ultrasonic();
     }
     if (determination == 0){
       Shot(); // Jeśli nic się nie pojawi, wal na oślep!
     }
   }
-  dem_shot(); 
+  human_booster();
+  dem_shot();
   rotator_search();
+  Serial.println(dedication);
 }
 
 //FUNKCJE
@@ -169,6 +177,7 @@ void Shot() {
   delay(1500);
   barrel_load_pos();
   power_lvl = 0;
+  dedication = 0;
 }
 
 // Odgłos sygnalizuje nienaładowanie zestawu.
@@ -185,20 +194,41 @@ void buzz_nought(){
   delay(b_del);
 }
 
-// Strzał na żądanie z ryzykiem (guzik)
+// Strzał na żądanie z ryzykiem - drugie naciśnięcie guzika.
 void dem_shot(){
-  rotator.disableOutputs();
-  buttonState = digitalRead(buttonPin);
+  //buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH && power_lvl >= 70) {
+    rotator.disableOutputs();
     Shot();
   }
-  if (buttonState == HIGH && power_lvl < 70) {
+  if (dedication > 1){
+   if (buttonState == HIGH && power_lvl < 70){
+    rotator.disableOutputs();
     buzz_nought();
     power_lvl = power_lvl - 16;
-   if (power_lvl < 0) {
+    dedication = 0;
+    if (power_lvl < 0) {
      power_lvl = 0;
+    }  
+   }  
+  }
+  if (buttonState == HIGH && dedication > 0){
+    dedication += 1;
+  }
+}
+
+// Booster mocy - pierwsze nacisnięcie guzika.
+void human_booster(){
+  buttonState = digitalRead(buttonPin);
+  if (buttonState == HIGH && dedication == 0) {
+     dedication = 1;
     }
- }
+  if (dedication == 0){
+     digitalWrite(boosterPin, LOW);
+    }
+  if (dedication > 0){
+     digitalWrite(boosterPin, HIGH);
+    }
 }
 
 //Silnik krokowy szuka i zatrzymuje się.
