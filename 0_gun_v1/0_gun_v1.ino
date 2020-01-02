@@ -72,6 +72,10 @@ void loop() {
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
   if(power_lvl < 99){ 
     delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
+    if (dedication == 0) {
+      delay(500);
+      Serial.println("no dedication bonus");
+    }
   }
   if (power_lvl == 100){
     rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
@@ -94,6 +98,8 @@ void loop() {
   rotator_search();
   Serial.println(dedication);
 }
+
+//void(* resetFunc) (void) = 0; // Funkcja resetuje pamięć Arduino po strzale, bo inaczej głupieje.
 
 //FUNKCJE
 //Głowica w pozycji do ładowania
@@ -178,6 +184,7 @@ void Shot() {
   barrel_load_pos();
   power_lvl = 0;
   dedication = 0;
+  //resetFunc();
 }
 
 // Odgłos sygnalizuje nienaładowanie zestawu.
@@ -196,12 +203,12 @@ void buzz_nought(){
 
 // Strzał na żądanie z ryzykiem - drugie naciśnięcie guzika.
 void dem_shot(){
-  //buttonState = digitalRead(buttonPin);
+  buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH && power_lvl >= 70) {
     rotator.disableOutputs();
     Shot();
   }
-  if (dedication > 1){
+  if (dedication > 2){
    if (buttonState == HIGH && power_lvl < 70){
     rotator.disableOutputs();
     buzz_nought();
@@ -221,7 +228,7 @@ void dem_shot(){
 void human_booster(){
   buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH && dedication == 0) {
-     dedication = 1;
+     dedication += 1;
     }
   if (dedication == 0){
      digitalWrite(boosterPin, LOW);
@@ -281,3 +288,7 @@ void ultrasonic() {
   delay(500);
   saveddistance = distance;
 }
+
+//void weather_levels() {
+//
+//}
