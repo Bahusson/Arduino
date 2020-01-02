@@ -7,7 +7,7 @@ void setup() {
 void loop() {
   // put your main code here, to run repeatedly:
   /// Analog read daje wartości od 0-1023
-  int potValue = analogRead(A0);
+  int potValue = analogRead(A2);
 
   //Konwertuje wartości z jednej funkcji na drugą.
   int mappedValue = map(potValue, 0, 1023, 0, 255);

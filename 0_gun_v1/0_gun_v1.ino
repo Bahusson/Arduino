@@ -1,6 +1,10 @@
 //IMPORTY
 #include <Servo.h> //ściągnij bibliotekę obsługującą serwo
 #include <AccelStepper.h> //ściągnij bibliotekę obsługującą silnik krokowy 
+// Opcjonalne dla sensora wilgotności i temperatury (DHT)
+#include <Adafruit_Sensor.h> //ściągnij ogólną bibliotekę sensorów
+#include <DHT.h> //Poniższe dwa to biblioteki sensorów wilgotności/temperatury.
+#include <DHT_U.h>
 
 //DEFINICJE pinów
 //LEDy
@@ -15,6 +19,9 @@
 //UltrasonicDistanceSensor
 #define trigPin 10
 #define echoPin 9
+//Czujnik DHT
+#define DHTPIN A1
+#define DHTTYPE DHT11
 
 //ZMIENNE GLOBALNE
 //Servo
@@ -25,6 +32,9 @@ AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, m
 const int buzzPin = 2;   // Buzzer pin.
 //Przycisk
 const int buttonPin = 4; // Button pin.
+//Czujnik DHT
+DHT_Unified dht(DHTPIN, DHTTYPE);
+uint32_t delayMS;
 
 int buttonState = 0;
 int power_lvl = 0;
@@ -38,18 +48,20 @@ void setup() {
   rotator.setMaxSpeed(200); // Parametry rotatora ustawione eksperymentalnie.
   rotator.setSpeed(200);
   rotator.setAcceleration(100.0);
-  pinMode(trigPin, OUTPUT);
+  pinMode(trigPin, OUTPUT); // Piny trigger i echo dla czujnika ruchu.
   pinMode(echoPin, INPUT);
-  pinMode(buzzPin, OUTPUT);
-  pinMode(buttonPin, INPUT);
+  pinMode(buzzPin, OUTPUT); // Pin głośnika/buzzera.
+  pinMode(buttonPin, INPUT); // Pin przycisku "na żądanie".
   randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
+  dht.begin(); // Zainicjalizuj DHT.
 }
 
 void loop() {
+  int photValue = analogRead(A2); // Zczytaj wartość z fotorezystora.
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
-  //Serial.println("moc wynosi: ");
-  Serial.println(power_lvl);
+  Serial.println(photValue);
+  //Serial.println(power_lvl);
   power_lvl++; //Dodaj 1 do poziomu naładowania - musi być na końcu?
   if(power_lvl < 99){ 
   delay(100); // Opóźnienie ładowania w ms - do dostosowania w produkcji.
@@ -71,7 +83,7 @@ void loop() {
       Shot(); // Jeśli nic się nie pojawi, wal na oślep!
     }
   }
-  dem_shot();
+  dem_shot(); 
   rotator_search();
 }
 
