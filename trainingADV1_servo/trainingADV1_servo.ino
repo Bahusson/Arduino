@@ -5,7 +5,7 @@ int pos = 0;
 Servo myservo1, myservo2; // Stwórz obiekt serwo, który będziesz kontrolował.
 
 void setup() {
-  myservo1.attach(9); //Przyporządkuj obiekt servo1 do pinu 9
+  myservo1.attach(6); //Przyporządkuj obiekt servo1 do pinu 9
   myservo2.attach(10); 
 }
 

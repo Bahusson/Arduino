@@ -77,33 +77,33 @@ void setup() {
   sensor_t sensor; //Ściągnij dane sensora DHT i ustaw na tej podstawie opóźnienie.
   delayMS = sensor.min_delay / 10000;
   // TEST Świateł i Dźwięków
-  ledblinks(tempPin, 400, 2);
-  ledblinks(dampPin, 400, 2);
-  ledblinks(lightPin, 400, 2);
-  ledblinks(boosterPin, 400, 2);
-  
+  ledblinks(tempPin, 300, 1);
+  ledblinks(dampPin, 300, 1);
+  ledblinks(lightPin, 300, 1);
+  ledblinks(boosterPin, 300, 1);
+  buzz_nought(1);
+  // Power_level po restarcie, żeby nigdy nie był zupełnie na 0, bo zawsze jest jakaś "minimalna moc".
+  byte power_bonus = random(2,4);
+  power_lvl += power_bonus;
 }
 
 void loop() {
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
   int photvalue = analogRead(A2);
-  byte flipval = random(60, 80) - getallmods(10,10,10,10);
-  Serial.print("randomval :");
-  Serial.println(flipval);
+  byte flipval = random(60, 80) - getallmods(10,10,10,10); // po ile % szans chcesz odjąć za zły pomiar każdej zmiennej?
   byte power_flip = random(100);
   if (power_flip < flipval){
     power_lvl++; //Dodaj 1 do poziomu naładowania z 75% prawdopodobieństwem.
   }
   Serial.println(power_lvl);
-  //Serial.println(photvalue);
   if(power_lvl < 99){ 
-    delay(100); // Domyślne opóźnienie ładowania w ms - do dostosowania w produkcji.
-    light_switch(500, photvalue); // Opóźniacz oświetleniowy.
+    delay(1000); // Domyślne opóźnienie ładowania w ms - do dostosowania w produkcji.
+    light_switch(1000, photvalue); // Opóźniacz oświetleniowy.
     if (dedication == 0) { // Opóźnienie na 1% ładowania
-      delay(500);
+      delay(1000);
     }
-    weather_switch(1,500); // Opóźniacz temperatury i wilgotności. 
+    weather_switch(1000,1000); // Opóźniacz temperatury i wilgotności. 
   }
   if (power_lvl == 100){
     rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
@@ -112,19 +112,19 @@ void loop() {
     rotator.disableOutputs(); // Odetnij prąd od silnika krokowego, żeby się nie grzał.
     //Sprawdź, czy nic się nie rusza przez 1-5 minut.
     byte stubborn = random(2,6);
-    long determination = stubborn * 12; // ; W produkcji daj 120 (minuty)!
+    long determination = stubborn * 120; // ; W produkcji daj 120 (minuty)!
     while (determination > 0 && power_lvl > 100) {
     determination-=1;
     ultrasonic();
     }
     if (determination == 0){
-      Shot(); // Jeśli nic się nie pojawi, wal na oślep!
+      byte pos = random(60,90);
+      Shot(pos); // Jeśli nic się nie pojawi, wal na oślep!
     }
   }
   human_booster();
   dem_shot();
   rotator_search();
-  //Serial.println(dedication);
 }
 
 //void(* resetFunc) (void) = 0; // Funkcja resetuje pamięć Arduino po strzale, bo inaczej głupieje.
@@ -136,8 +136,9 @@ void barrel_load_pos() {
 }
 
 //Głowica w pozycji do strzału
-void barrel_shot_pos() {
-  barrel.write(85);
+void barrel_shot_pos(byte pos){
+  barrel.write(pos);
+  delay(2000);
 }
 
 // Zestaw LED-ów 'ładuje' się
@@ -204,8 +205,8 @@ void buzz_shot() {
 }
 
 // Pełna sekwencja wystrzału.
-void Shot() {
-  barrel_shot_pos();
+void Shot(byte pos) {
+  barrel_shot_pos(pos);
   delay(1000);
   LED_shot(); //Zawiera buzz_shot();
   delay(1500);
@@ -216,18 +217,17 @@ void Shot() {
   //resetFunc();
 }
 
-// Odgłos sygnalizuje nienaładowanie zestawu.
-void buzz_nought(){
+// Odgłos o wartości "2" sygnalizuje nienaładowanie zestawu. Przy wartości "1" sygnał testowy na setup.
+void buzz_nought(byte rep){
   int n_buzz_val = 350;
   int b_del = 100;
+  while (rep > 0){
   tone(buzzPin, n_buzz_val);
   delay(b_del);
   noTone(buzzPin);
   delay(b_del);
-  tone(buzzPin, n_buzz_val);
-  delay(b_del);
-  noTone(buzzPin);
-  delay(b_del);
+  rep -=1;
+  }
 }
 
 // Strzał na żądanie z ryzykiem - drugie naciśnięcie guzika.
@@ -235,13 +235,14 @@ void dem_shot(){
   buttonState = digitalRead(buttonPin);
   if (buttonState == HIGH && power_lvl >= 70) {
     rotator.disableOutputs();
-    Shot();
+    Shot(90);
   }
   if (dedication > 2){
    if (buttonState == HIGH && power_lvl < 70){
     rotator.disableOutputs();
-    buzz_nought();
-    power_lvl = power_lvl - 16;
+    buzz_nought(2);
+    byte penalty = random(6,15);
+    power_lvl = power_lvl - penalty;
     dedication = 0;
     if (power_lvl < 0) {
      power_lvl = 0;
@@ -303,10 +304,10 @@ void ultrasonic() {
   duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
   distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
   int res = 2; // Ustaw czułość
-
   if (saveddistance > 0 && saveddistance < 400) {
     if (saveddistance - distance >= res or saveddistance - distance <= -res){
-      Shot();
+      byte pos = random(80,90);
+      Shot(pos);
     }
   }
   if (distance >= 400 || distance <= 0){
@@ -341,19 +342,18 @@ void weather_switch(int temp_delay, int damp_delay) {
   sensors_event_t event;
   dht.temperature().getEvent(&event);
   byte temp = event.temperature;
-  if (isnan(event.temperature)) {
+  if (isnan(event.temperature)) { // Jeśli czujnik szwankuje
     ledblinks(tempPin, 200, 3);
-    //Serial.println("no temp reading!");
     tempmod = 1;
   }
-  if (temp < 16 or temp > 24){
+  if (temp < 16 or temp > 24){ // Jeśli zły pomiar
     digitalWrite(tempPin, LOW);
     //Serial.print("hot :");
     //Serial.println(temp);
     delay(temp_delay);
     tempmod = 1;
   }
-  else {
+  else { // Jak dobry pomiar
     digitalWrite(tempPin, HIGH);
     tempmod = 0;
   }
@@ -361,26 +361,23 @@ void weather_switch(int temp_delay, int damp_delay) {
   // Wilgotność.
   dht.humidity().getEvent(&event);
   byte damp = event.relative_humidity;
-  if (isnan(event.relative_humidity)) {
+  if (isnan(event.relative_humidity)) { // Jeśli czujnik szwankuje
     ledblinks(dampPin, 200, 3);
-    //Serial.println("no humidity reading!");
     dampmod = 1;
     }
-  if (damp < 38 or damp > 60){
+  if (damp < 38 or damp > 60){ // Jeśli zły pomiar
     digitalWrite(dampPin, LOW);
-    Serial.print("dry :");
-    Serial.println(damp);
     delay(damp_delay);
     dampmod = 1;
   }
-  else {
+  else { // Jak dobry pomiar
     digitalWrite(dampPin, HIGH);
     dampmod = 0;
   }
 }
 
 // Błyskacz ledów
-void ledblinks(int pin, int interval, int rep) { // rozwiń do X ilości mrugnięć, bo to amatorszczyzna jest. :P
+void ledblinks(int pin, int interval, int rep) { // Błyska Ledem "x" w interwale "y" razy "z".
     while (rep > 0) {
          digitalWrite(pin, HIGH);
          delay(interval);
