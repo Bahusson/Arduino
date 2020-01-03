@@ -1,3 +1,7 @@
+// Szkic testowy dla Arduino UNO. 
+// Dla PRO Mini zamień piny A0 z A1, (oraz 11 z 12?)
+// Będzie działał też dodatkowy pin A6.
+
 //IMPORTY
 #include <Servo.h> //ściągnij bibliotekę obsługującą serwo
 #include <AccelStepper.h> //ściągnij bibliotekę obsługującą silnik krokowy 
@@ -10,15 +14,16 @@
 //LEDy "głowicy"
 #define LEDpin1  3
 #define LEDpin2  5
-#define LEDpin3  11
+#define LEDpin3  11 // Na pro Mini daj 12.(?)
 //LEDy "indykatory"
 #define lightPin A5
-#define weatherPin A4
+#define dampPin A4
 #define boosterPin A3
+#define tempPin A6 //Tylko w produkcji na PRO MINI
 //StepperMotor
 #define motorPin1  7     // IN1 on the ULN2003 driver 1
 #define motorPin2  8     // IN2 on the ULN2003 driver 1
-#define motorPin3  12     // IN3 on the ULN2003 driver 1
+#define motorPin3  12     // IN3 on the ULN2003 driver 1, Na pro mini 11(?)
 #define motorPin4  13     // IN4 on the ULN2003 driver 1
 //UltrasonicDistanceSensor
 #define trigPin 10
@@ -46,6 +51,12 @@ int val = 0;
 int saveddistance = 0;
 int dedication = 0;
 
+//Modyfikatory szans
+byte dampmod = 0;
+byte tempmod = 0;
+byte lightmod = 0;
+byte boostmod = 0;
+
 void setup() {
   Serial.begin(9600);
   barrel.attach(6); // Przyporządkuj obiekt serwa "barrel" do pinu RWM 6.
@@ -57,20 +68,29 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(buzzPin, OUTPUT); // Pin głośnika/buzzera.
   pinMode(buttonPin, INPUT); // Pin przycisku "na żądanie".
-  randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
+  randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0. Na Pro Mini daj 1.
   dht.begin(); // Zainicjalizuj DHT.
   pinMode(lightPin, OUTPUT);
-  pinMode(weatherPin, OUTPUT);
+  pinMode(dampPin, OUTPUT);
   pinMode(boosterPin, OUTPUT);
-  //digitalWrite(lightPin, HIGH);
-  //digitalWrite(weatherPin, HIGH);
+  pinMode(tempPin, OUTPUT);
+  sensor_t sensor; //Ściągnij dane sensora DHT i ustaw na tej podstawie opóźnienie.
+  delayMS = sensor.min_delay / 10000;
+  // TEST Świateł i Dźwięków
+  ledblinks(tempPin, 400, 2);
+  ledblinks(dampPin, 400, 2);
+  ledblinks(lightPin, 400, 2);
+  ledblinks(boosterPin, 400, 2);
+  
 }
 
 void loop() {
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
   int photvalue = analogRead(A2);
-  byte flipval = random (60, 80)
+  byte flipval = random(60, 80) - getallmods(10,10,10,10);
+  Serial.print("randomval :");
+  Serial.println(flipval);
   byte power_flip = random(100);
   if (power_flip < flipval){
     power_lvl++; //Dodaj 1 do poziomu naładowania z 75% prawdopodobieństwem.
@@ -79,12 +99,11 @@ void loop() {
   //Serial.println(photvalue);
   if(power_lvl < 99){ 
     delay(100); // Domyślne opóźnienie ładowania w ms - do dostosowania w produkcji.
-    light_switch(500, photvalue);
+    light_switch(500, photvalue); // Opóźniacz oświetleniowy.
     if (dedication == 0) { // Opóźnienie na 1% ładowania
       delay(500);
     }
-    // Tutaj wstaw warunki dla opóźniacza temperatury i wilgotności.
-    
+    weather_switch(1,500); // Opóźniacz temperatury i wilgotności. 
   }
   if (power_lvl == 100){
     rotator.enableOutputs(); // Podłącz prąd do silnika krokowego, żeby mógł się ruszyć..
@@ -193,6 +212,7 @@ void Shot() {
   barrel_load_pos();
   power_lvl = 0;
   dedication = 0;
+  saveddistance = 0;
   //resetFunc();
 }
 
@@ -241,9 +261,11 @@ void human_booster(){
     }
   if (dedication == 0){
      digitalWrite(boosterPin, LOW);
+     boostmod = 1;
     }
   if (dedication > 0){
      digitalWrite(boosterPin, HIGH);
+     boostmod = 0;
     }
 }
 
@@ -298,12 +320,77 @@ void ultrasonic() {
   saveddistance = distance;
 }
 
+// Opóźnienie wynikłe z oświetlenia.
 void light_switch(int delay_time, int photval) {
     if (photval > 400){
       digitalWrite(lightPin, LOW);
       delay(delay_time);
+      lightmod = 1;
     }
     else {
       digitalWrite(lightPin, HIGH);
+      lightmod = 0;
     }
+}
+
+// Opóźnienie wynikłe z wilgotności i temperatury.
+void weather_switch(int temp_delay, int damp_delay) {
+  // Delay between measurements.
+  delay(delayMS);
+  // Temperatura
+  sensors_event_t event;
+  dht.temperature().getEvent(&event);
+  byte temp = event.temperature;
+  if (isnan(event.temperature)) {
+    ledblinks(tempPin, 200, 3);
+    //Serial.println("no temp reading!");
+    tempmod = 1;
+  }
+  if (temp < 16 or temp > 24){
+    digitalWrite(tempPin, LOW);
+    //Serial.print("hot :");
+    //Serial.println(temp);
+    delay(temp_delay);
+    tempmod = 1;
+  }
+  else {
+    digitalWrite(tempPin, HIGH);
+    tempmod = 0;
+  }
+     
+  // Wilgotność.
+  dht.humidity().getEvent(&event);
+  byte damp = event.relative_humidity;
+  if (isnan(event.relative_humidity)) {
+    ledblinks(dampPin, 200, 3);
+    //Serial.println("no humidity reading!");
+    dampmod = 1;
+    }
+  if (damp < 38 or damp > 60){
+    digitalWrite(dampPin, LOW);
+    Serial.print("dry :");
+    Serial.println(damp);
+    delay(damp_delay);
+    dampmod = 1;
+  }
+  else {
+    digitalWrite(dampPin, HIGH);
+    dampmod = 0;
+  }
+}
+
+// Błyskacz ledów
+void ledblinks(int pin, int interval, int rep) { // rozwiń do X ilości mrugnięć, bo to amatorszczyzna jest. :P
+    while (rep > 0) {
+         digitalWrite(pin, HIGH);
+         delay(interval);
+         digitalWrite(pin, LOW);
+         delay(interval);
+         rep -=1;
+    }
+}
+
+byte getallmods(byte sig1, byte sig2, byte sig3, byte sig4){
+  byte totalmod = dampmod * sig1 + tempmod * sig2 + lightmod *sig3 + boostmod * sig4;
+  return totalmod;
 }
