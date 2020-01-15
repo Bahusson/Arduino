@@ -16,10 +16,10 @@
 #define LEDpin2  5
 #define LEDpin3  6
 //LEDy "indykatory"
-#define lightPin A0
+#define lightPin A2
 #define dampPin A1
-#define boosterPin A2
-#define tempPin A3 //Tylko w produkcji na PRO MINI
+#define boosterPin A3
+#define tempPin A0 //Tylko w produkcji na PRO MINI
 //StepperMotor
 #define motorPin1  2     // IN1 on the ULN2003 driver 1
 #define motorPin2  4     // IN2 on the ULN2003 driver 1
@@ -48,7 +48,7 @@ DHT_Unified dht(DHTPIN, DHTTYPE);
 uint32_t delayMS;
 
 int buttonState = 0;
-int power_lvl = 100;
+int power_lvl = 98;
 int val = 0;
 int saveddistance = 0;
 int dedication = 0;
@@ -93,7 +93,7 @@ void setup() {
 void loop() {
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
-  int photvalue = analogRead(6);
+  int photvalue = analogRead(5);
   byte flipval = random(60, 80) - getallmods(0,0,0,0); // po ile % szans chcesz odjąć za zły pomiar każdej zmiennej?
   byte power_flip = random(100);
   if (power_flip < flipval){
