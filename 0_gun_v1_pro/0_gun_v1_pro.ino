@@ -1,5 +1,5 @@
-// Szkic testowy dla Arduino UNO. 
-// Dla PRO Mini zamień piny A0 z A1, (oraz 11 z 12?)
+// Szkic testowy dla Arduino PRO MINI
+// Dla PRO Mini wrzuć random seed na pin nr A7.
 // Będzie działał też dodatkowy pin A6.
 
 //IMPORTY
@@ -14,23 +14,25 @@
 //LEDy "głowicy"
 #define LEDpin1  3
 #define LEDpin2  5
-#define LEDpin3  12 // Na pro Mini daj 12.(?)
+#define LEDpin3  6
 //LEDy "indykatory"
-#define lightPin A5
-#define dampPin A4
-#define boosterPin A3
-#define tempPin A7 //Tylko w produkcji na PRO MINI
+#define lightPin A0
+#define dampPin A1
+#define boosterPin A2
+#define tempPin A3 //Tylko w produkcji na PRO MINI
 //StepperMotor
-#define motorPin1  7     // IN1 on the ULN2003 driver 1
-#define motorPin2  8     // IN2 on the ULN2003 driver 1
-#define motorPin3  11     // IN3 on the ULN2003 driver 1, Na pro mini 11(?)
-#define motorPin4  13     // IN4 on the ULN2003 driver 1
+#define motorPin1  2     // IN1 on the ULN2003 driver 1
+#define motorPin2  4     // IN2 on the ULN2003 driver 1
+#define motorPin3  7     // IN3 on the ULN2003 driver 1
+#define motorPin4  8     // IN4 on the ULN2003 driver 1
 //UltrasonicDistanceSensor
 #define trigPin 10
 #define echoPin 9
 //Czujnik DHT
-#define DHTPIN A1
+#define DHTPIN A4
 #define DHTTYPE DHT11
+//Servo
+#define servoPin 11
 
 //ZMIENNE GLOBALNE
 //Servo
@@ -38,9 +40,9 @@ Servo barrel; // Stwórz obiekt serwo, który będziesz kontrolował.
 //StepperMotor
 AccelStepper rotator(AccelStepper::FULL4WIRE, motorPin1, motorPin3, motorPin2, motorPin4);
 //Buzzer
-const int buzzPin = 2;   // Buzzer pin.
+const int buzzPin = 12;   // Buzzer pin.
 //Przycisk
-const int buttonPin = 4; // Button pin.
+const int buttonPin = 13; // Button pin.
 //Czujnik DHT
 DHT_Unified dht(DHTPIN, DHTTYPE);
 uint32_t delayMS;
@@ -60,7 +62,7 @@ byte boostmod = 0;
 
 void setup() {
   Serial.begin(9600);
-  barrel.attach(6); // Przyporządkuj obiekt serwa "barrel" do pinu RWM 6.
+  barrel.attach(servoPin); // Przyporządkuj obiekt serwa "barrel" do pinu RWM 6.
   barrel_load_pos(); // Głowica na pozycję 0 po starcie programu.
   rotator.setMaxSpeed(200); // Parametry rotatora ustawione eksperymentalnie.
   rotator.setSpeed(200);
@@ -69,7 +71,7 @@ void setup() {
   pinMode(echoPin, INPUT);
   pinMode(buzzPin, OUTPUT); // Pin głośnika/buzzera.
   pinMode(buttonPin, INPUT); // Pin przycisku "na żądanie".
-  randomSeed(analogRead(1)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0. Na Pro Mini daj 1.
+  randomSeed(analogRead(7)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0. Na Pro Mini daj 1.
   dht.begin(); // Zainicjalizuj DHT.
   pinMode(lightPin, OUTPUT);
   pinMode(dampPin, OUTPUT);
@@ -91,7 +93,7 @@ void setup() {
 void loop() {
   // Kalkuluje "determinację" działka przy szukaniu celu.
   LED_loader();
-  int photvalue = analogRead(A2);
+  int photvalue = analogRead(6);
   byte flipval = random(60, 80) - getallmods(0,0,0,0); // po ile % szans chcesz odjąć za zły pomiar każdej zmiennej?
   byte power_flip = random(100);
   if (power_flip < flipval){
