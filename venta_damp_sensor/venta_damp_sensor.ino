@@ -5,11 +5,11 @@
 #define Y_LED  3  // LED Żółty
 #define R_LED  4  // LED Czerwony
 #define Buzzer 5  // Głośnik
-#define Waterlvl A0 // Czujnik poziomu wody
+#define Waterlvl A1 // Czujnik poziomu wody
 
 int waterval = 0;  // wartość poziomu wody
 int waterbeep = 0; // dzięki temu na żółtym poziomie wody beeper daje znać tylko raz.
-int minute = 60000; // minuta w milisekundach
+unsigned int minute = 60000; // minuta w milisekundach
 
 void setup() {
   Serial.begin(9600);
@@ -25,6 +25,7 @@ void setup() {
 
 void loop() {
   waterval = analogRead(Waterlvl);
+  Serial.println(waterval);
   if (waterval<=100){ 
     Serial.println("Water Level: Empty");
     digitalWrite(R_LED, HIGH);
@@ -33,7 +34,7 @@ void loop() {
     buzz_buzz(2);
     delay(minute/2);
     } 
-  else if (waterval>100 && waterval<=950){ 
+  else if (waterval>100 && waterval<=650){ 
     Serial.println("Water Level: Medium"); 
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
@@ -41,9 +42,10 @@ void loop() {
     if (waterbeep == 1){
       buzz_buzz(1);
       delay(minute);
+      waterbeep = 0;
      }
     } 
-  else if (waterval>950){ 
+  else if (waterval>650){ 
     Serial.println("Water Level: High");
     digitalWrite(G_LED, HIGH);
     digitalWrite(R_LED, LOW);
