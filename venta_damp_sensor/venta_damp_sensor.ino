@@ -25,9 +25,9 @@ void setup() {
   ledblinks(G_LED, 300, 1);
   ledblinks(Y_LED, 300, 1);
   ledblinks(R_LED, 300, 1);
-  //breaker_on();
+  breaker_off();
   buzz_buzz(3);
-  //waterval = 1000;
+  //waterval = 1000; // Do kalibrowania serwa po wymianie przełącznika.
 }
 
 void loop() {
@@ -98,7 +98,7 @@ void buzz_buzz(byte rep){
 //Głowica w pozycji "Włączonej"
 void breaker_on() {
   breaker.attach(servoPin);
-  breaker.write(50);
+  breaker.write(48);
   delay(1000);
   breaker.detach();
 }
@@ -106,7 +106,7 @@ void breaker_on() {
 //Głowica w pozycji "Wyłączonej"
 void breaker_off(){
   breaker.attach(servoPin);
-  breaker.write(70);
+  breaker.write(68);
   delay(1000);
   breaker.detach();
 }
