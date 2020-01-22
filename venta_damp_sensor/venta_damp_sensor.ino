@@ -15,6 +15,7 @@ int waterbeep = 0; // dzięki temu na żółtym poziomie wody beeper daje znać 
 unsigned int minute = 60000; // minuta w milisekundach
 Servo breaker; // Stwórz obiekt serwo - przerywacz.
 byte state = 1;
+byte timeoff = 1;
 
 void setup() {
   Serial.begin(9600);
@@ -42,8 +43,13 @@ void loop() {
     breaker_off();
     state = 1;
     delay(minute/2);
+    timeoff -= 1;
+    if (timeoff < 2){
+      timeoff = 2;
+      standby();
+     }
     }  
-  else if (waterval>100 && waterval<=600){ 
+  else if (waterval>100 && waterval<=500){ 
     Serial.println("Water Level: Medium"); 
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
@@ -55,8 +61,9 @@ void loop() {
       waterbeep = 0;
      }
     }   
-  else if (waterval>600){ 
+  else if (waterval>500){ 
     Serial.println("Water Level: High");
+    timeoff = 120;
     digitalWrite(G_LED, HIGH);
     digitalWrite(R_LED, LOW);
     digitalWrite(Y_LED, LOW);
@@ -98,7 +105,7 @@ void buzz_buzz(byte rep){
 //Głowica w pozycji "Włączonej"
 void breaker_on() {
   breaker.attach(servoPin);
-  breaker.write(48);
+  breaker.write(46);
   delay(1000);
   breaker.detach();
 }
@@ -109,4 +116,11 @@ void breaker_off(){
   breaker.write(68);
   delay(1000);
   breaker.detach();
+}
+
+//Tryb niskiego poboru energii po dwóch godzinach od zostawienia, jakby się wyłączył.
+//Przypomina o sobie na chwilę tylko raz na dwie godziny.
+void standby(){
+  digitalWrite(R_LED, LOW);
+  delay(minute*120);
 }
