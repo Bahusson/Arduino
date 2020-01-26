@@ -34,7 +34,7 @@ void setup() {
 void loop() {
   waterval = analogRead(Waterlvl);
   Serial.println(waterval);
-  if (waterval<=100){ 
+  if (waterval<=250){ 
     Serial.println("Water Level: Empty");
     digitalWrite(R_LED, HIGH);
     digitalWrite(Y_LED, LOW);
@@ -49,7 +49,7 @@ void loop() {
       standby();
      }
     }  
-  else if (waterval>100 && waterval<=500){ 
+  else if (waterval>250 && waterval<=500){ 
     Serial.println("Water Level: Medium"); 
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
