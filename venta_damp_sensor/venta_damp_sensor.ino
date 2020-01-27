@@ -9,13 +9,13 @@
 #define Buzzer 5  // Głośnik
 #define servoPin 6 // Serwo
 #define Waterlvl A1 // Czujnik poziomu wody
+#define water_switch 7 // Wyłącznik czujnika wody
 
 int waterval = 0;  // wartość poziomu wody
 int waterbeep = 0; // dzięki temu na żółtym poziomie wody beeper daje znać tylko raz.
 unsigned int minute = 60000; // minuta w milisekundach
 Servo breaker; // Stwórz obiekt serwo - przerywacz.
 byte state = 1;
-byte timeoff = 1;
 
 void setup() {
   Serial.begin(9600);
@@ -23,18 +23,21 @@ void setup() {
   pinMode(Y_LED, OUTPUT);
   pinMode(R_LED, OUTPUT);
   pinMode(Buzzer, OUTPUT);
+  pinMode(water_switch, OUTPUT);
   ledblinks(G_LED, 300, 1);
   ledblinks(Y_LED, 300, 1);
   ledblinks(R_LED, 300, 1);
   breaker_off();
   buzz_buzz(3);
+  digitalWrite(water_switch, HIGH);
   //waterval = 1000; // Do kalibrowania serwa po wymianie przełącznika.
 }
 
 void loop() {
+  digitalWrite(water_switch, HIGH);
   waterval = analogRead(Waterlvl);
   Serial.println(waterval);
-  if (waterval<=250){ 
+  if (waterval <= 200) {
     Serial.println("Water Level: Empty");
     digitalWrite(R_LED, HIGH);
     digitalWrite(Y_LED, LOW);
@@ -42,62 +45,57 @@ void loop() {
     buzz_buzz(2);
     breaker_off();
     state = 1;
-    delay(minute/2);
-    timeoff -= 1;
-    if (timeoff < 2){
-      timeoff = 2;
-      standby();
-     }
-    }  
-  else if (waterval>250 && waterval<=500){ 
-    Serial.println("Water Level: Medium"); 
+    w_sensor_off_();
+  }
+  else if (waterval > 200 && waterval <= 500) {
+    Serial.println("Water Level: Medium");
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
     digitalWrite(G_LED, LOW);
     state = 1;
-    if (waterbeep == 1){
+    if (waterbeep == 1) {
       buzz_buzz(1);
-      delay(minute);
       waterbeep = 0;
-     }
-    }   
-  else if (waterval>500){ 
+    }
+    w_sensor_off_();
+  }
+  else if (waterval > 500) {
     Serial.println("Water Level: High");
-    timeoff = 120;
     digitalWrite(G_LED, HIGH);
     digitalWrite(R_LED, LOW);
     digitalWrite(Y_LED, LOW);
     waterbeep = 1;
-    if(state == 1){
+    if (state == 1) {
       breaker_on();
       state = 0;
-     }
     }
+    w_sensor_off_();
+  }
   delay(1000);
 }
 
 //FUNKCJE
 // Błyskacz ledów
 void ledblinks(int pin, int interval, int rep) { // Błyska Ledem "x" w interwale "y" razy "z".
-    while (rep > 0) {
-         digitalWrite(pin, HIGH);
-         delay(interval);
-         digitalWrite(pin, LOW);
-         delay(interval);
-         rep -=1;
-    }
+  while (rep > 0) {
+    digitalWrite(pin, HIGH);
+    delay(interval);
+    digitalWrite(pin, LOW);
+    delay(interval);
+    rep -= 1;
+  }
 }
 
 // Głośnik bzyczy "rep" razy.
-void buzz_buzz(byte rep){
+void buzz_buzz(byte rep) {
   int n_buzz_val = 350;
   int b_del = 100;
-  while (rep > 0){
-  tone(Buzzer, n_buzz_val);
-  delay(b_del);
-  noTone(Buzzer);
-  delay(b_del);
-  rep -=1;
+  while (rep > 0) {
+    tone(Buzzer, n_buzz_val);
+    delay(b_del);
+    noTone(Buzzer);
+    delay(b_del);
+    rep -= 1;
   }
 }
 
@@ -105,22 +103,21 @@ void buzz_buzz(byte rep){
 //Głowica w pozycji "Włączonej"
 void breaker_on() {
   breaker.attach(servoPin);
-  breaker.write(46);
+  breaker.write(45);
   delay(1000);
   breaker.detach();
 }
 
 //Głowica w pozycji "Wyłączonej"
-void breaker_off(){
+void breaker_off() {
   breaker.attach(servoPin);
   breaker.write(68);
   delay(1000);
   breaker.detach();
 }
 
-//Tryb niskiego poboru energii po dwóch godzinach od zostawienia, jakby się wyłączył.
-//Przypomina o sobie na chwilę tylko raz na dwie godziny.
-void standby(){
-  digitalWrite(R_LED, LOW);
-  delay(minute*120);
+//Tryb oszczędzania elektrody w czujniku poziomu wody
+void w_sensor_off_() {
+  digitalWrite(water_switch, LOW);
+  delay(minute * 60); // Wyłącz czujnik na godzinę.
 }
