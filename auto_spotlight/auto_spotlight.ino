@@ -15,6 +15,12 @@
 #define DS1302_CE_PIN     9   // Arduino pin for the Chip Enable
 
 
+//Zmienne Globalne
+int saveddistance = 0;
+byte workmode = 0;
+long minute = 60000; // minuta w milisekundach
+
+
 // Macros to convert the bcd values of the registers to normal
 // integer variables.
 // The code uses seperate variables for the high byte and the low byte
@@ -205,8 +211,10 @@ void setup() {
   DS1302_clock_burst_write( (uint8_t *) &rtc);
 #endif
 
-
+  //Zainicjuj piny
   pinMode(lightPin, OUTPUT);
+  pinMode(trigPin, OUTPUT); // Piny trigger i echo dla czujnika ruchu.
+  pinMode(echoPin, INPUT);
 }
 
 void loop() {
@@ -232,11 +240,16 @@ void loop() {
   //Serial.println(rtc.Seconds);
 
   // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji.
-  if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
-    digitalWrite(lightPin, LOW);
+  if (workmode == 0){
+    ultrasonic();
   }
-  else if(rtc.Seconds10 >= 1 && rtc.Seconds > 4){
-    digitalWrite(lightPin, HIGH);
+  else if(workmode == 1){
+    if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
+      digitalWrite(lightPin, LOW);
+    }
+    else if(rtc.Seconds10 >= 1 && rtc.Seconds > 4){
+      digitalWrite(lightPin, HIGH);
+    }
   }
   delay(1000);
 }
@@ -468,4 +481,32 @@ void _DS1302_togglewrite( uint8_t data, uint8_t release)
       delayMicroseconds( 1);       // tCL=1000ns, tCDD=800ns
     }
   }
+}
+
+void ultrasonic() {
+  long duration, distance;
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
+  distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
+  int res = 4; // Ustaw czułość
+  digitalWrite(lightPin,LOW);
+  if (saveddistance > 0 && saveddistance < 400) {
+    if (saveddistance - distance >= res or saveddistance - distance <= -res){
+      digitalWrite(lightPin,HIGH);
+      delay(minute * 15); // W produkcji poczekaj minute*15
+    }
+  }
+ /* if (distance >= 400 || distance <= 0){
+   Serial.println(distance);
+   }
+  else {
+   Serial.print(distance);
+   Serial.println(" cm");
+   }*/
+  delay(5000); // W produkcji sprawdzaj co minute/2
+  saveddistance = distance;
 }
