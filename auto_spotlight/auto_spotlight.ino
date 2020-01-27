@@ -1,5 +1,5 @@
 //1-Channel module
-#define LigthPin 2
+#define lightPin 2
 //UltrasonicDistanceSensor
 #define echoPin  3
 #define trigPin  4
@@ -206,7 +206,7 @@ void setup() {
 #endif
 
 
-  pinMode(LigthPin, OUTPUT);
+  pinMode(lightPin, OUTPUT);
 }
 
 void loop() {
@@ -229,9 +229,19 @@ void loop() {
     rtc.Day, \
     2000 + bcd2bin( rtc.Year10, rtc.Year));
   Serial.println( buffer);
+  //Serial.println(rtc.Seconds);
 
-  delay( 5000);
+  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji.
+  if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
+    digitalWrite(lightPin, LOW);
+  }
+  else if(rtc.Seconds10 >= 1 && rtc.Seconds > 4){
+    digitalWrite(lightPin, HIGH);
+  }
+  delay(1000);
 }
+
+
 
 // DS1302_clock_burst_read
 //
