@@ -18,7 +18,8 @@
 //Zmienne Globalne
 int saveddistance = 0;
 byte workmode = 0;
-long minute = 60000; // minuta w milisekundach
+byte lightround = 0;
+unsigned int minute = 60000; // minuta w milisekundach
 
 
 // Macros to convert the bcd values of the registers to normal
@@ -485,6 +486,8 @@ void _DS1302_togglewrite( uint8_t data, uint8_t release)
 
 void ultrasonic() {
   long duration, distance;
+  Serial.print("Do 15: ");
+  Serial.println(lightround);
   digitalWrite(trigPin, LOW);
   delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
@@ -493,12 +496,25 @@ void ultrasonic() {
   duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
   distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
   int res = 4; // Ustaw czułość
-  digitalWrite(lightPin,LOW);
+  Serial.print(distance);
+  Serial.println(" cm");
+  byte lightstate = 0;
+  if (lightround > 30) {
+     digitalWrite(lightPin,LOW);
+     lightround = 0;
+     lightstate = 0;
+  }
   if (saveddistance > 0 && saveddistance < 400) {
     if (saveddistance - distance >= res or saveddistance - distance <= -res){
       digitalWrite(lightPin,HIGH);
-      delay(minute * 15); // W produkcji poczekaj minute*15
+      lightround = 0;
+      lightstate = 1;
+      delay(2000); // W produkcji poczekaj minute*15 rund
     }
+    else{
+      lightround += 1;
+      delay(2000);
+      }
   }
  /* if (distance >= 400 || distance <= 0){
    Serial.println(distance);
@@ -507,6 +523,9 @@ void ultrasonic() {
    Serial.print(distance);
    Serial.println(" cm");
    }*/
-  delay(5000); // W produkcji sprawdzaj co minute/2
+  //delay(1000); // W produkcji sprawdzaj co minute/2?
+  if (lightstate == 0){
+    delay(5000); //Jeśli jest wyłączony to niech oszczędza detektor i sprawdza odległość tylko co 5sek.
+  }
   saveddistance = distance;
 }
