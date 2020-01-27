@@ -103,8 +103,8 @@ void buzz_buzz(byte rep) {
 //Głowica w pozycji "Włączonej"
 void breaker_on() {
   breaker.attach(servoPin);
-  breaker.write(45);
-  delay(1000);
+  breaker.write(48);
+  delay(500);
   breaker.detach();
 }
 
@@ -112,7 +112,7 @@ void breaker_on() {
 void breaker_off() {
   breaker.attach(servoPin);
   breaker.write(68);
-  delay(1000);
+  delay(500);
   breaker.detach();
 }
 
