@@ -16,6 +16,7 @@
 
 
 //Zmienne Globalne
+int buttonState = 0;
 int saveddistance = 0;
 byte workmode = 0;
 byte lightround = 0;
@@ -213,6 +214,7 @@ void setup() {
 #endif
 
   //Zainicjuj piny
+  randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
   pinMode(lightPin, OUTPUT);     // Wyjście na kanał lampy
   pinMode(trigPin, OUTPUT);      // Piny trigger i echo dla czujnika ruchu.
   pinMode(echoPin, INPUT);
@@ -244,10 +246,21 @@ void loop() {
   Serial.println( buffer);
   //Serial.println(rtc.Seconds);
   switch_mode(); //Przełącznik trybu pracy
+  if (workmode == 0){
+    digitalWrite(offLED, HIGH);
+    digitalWrite(defLED, LOW);
+    digitalWrite(farLED, LOW);
+  }
   if (workmode == 1){ 
+    digitalWrite(defLED, HIGH);
+    digitalWrite(offLED, LOW);
+    digitalWrite(farLED, LOW);
     ultrasonic();
   }
-  else if(workmode == 2){  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji.
+  else if(workmode == 2){  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji
+    digitalWrite(farLED, HIGH);
+    digitalWrite(offLED, LOW);
+    digitalWrite(defLED, LOW);
     if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
       digitalWrite(lightPin, LOW);
     }
@@ -513,11 +526,11 @@ void ultrasonic() {
       digitalWrite(lightPin,HIGH);
       lightround = 0;
       lightstate = 1;
-      delay(2000); // W produkcji poczekaj minute*15 rund
+      delay(1000); // W produkcji poczekaj minute*15 rund
     }
     else{
       lightround += 1;
-      delay(2000);
+      delay(1000);
       }
   }
  /* if (distance >= 400 || distance <= 0){
