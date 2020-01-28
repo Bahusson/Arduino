@@ -213,9 +213,13 @@ void setup() {
 #endif
 
   //Zainicjuj piny
-  pinMode(lightPin, OUTPUT);
-  pinMode(trigPin, OUTPUT); // Piny trigger i echo dla czujnika ruchu.
+  pinMode(lightPin, OUTPUT);     // Wyjście na kanał lampy
+  pinMode(trigPin, OUTPUT);      // Piny trigger i echo dla czujnika ruchu.
   pinMode(echoPin, INPUT);
+  pinMode(switch_button, INPUT); // Przełącznik trybu pracy
+  pinMode(defLED, OUTPUT);       // LEDy 
+  pinMode(farLED, OUTPUT);
+  pinMode(offLED, OUTPUT); 
 }
 
 void loop() {
@@ -239,12 +243,11 @@ void loop() {
     2000 + bcd2bin( rtc.Year10, rtc.Year));
   Serial.println( buffer);
   //Serial.println(rtc.Seconds);
-
-  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji.
-  if (workmode == 0){
+  switch_mode(); //Przełącznik trybu pracy
+  if (workmode == 1){ 
     ultrasonic();
   }
-  else if(workmode == 1){
+  else if(workmode == 2){  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji.
     if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
       digitalWrite(lightPin, LOW);
     }
@@ -484,6 +487,7 @@ void _DS1302_togglewrite( uint8_t data, uint8_t release)
   }
 }
 
+// Funkcja sprawdza czy ktoś siedzi przed komputerem.
 void ultrasonic() {
   long duration, distance;
   Serial.print("Do 15: ");
@@ -495,11 +499,11 @@ void ultrasonic() {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
   distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
-  int res = 4; // Ustaw czułość
+  int res = 5; // Ustaw czułość
   Serial.print(distance);
   Serial.println(" cm");
   byte lightstate = 0;
-  if (lightround > 30) {
+  if (lightround > 15) {
      digitalWrite(lightPin,LOW);
      lightround = 0;
      lightstate = 0;
@@ -528,4 +532,25 @@ void ultrasonic() {
     delay(5000); //Jeśli jest wyłączony to niech oszczędza detektor i sprawdza odległość tylko co 5sek.
   }
   saveddistance = distance;
+}
+
+// Przełączanie trybów pracy jednym guzikiem
+// Tryby "czujny", "far from home", "off"(domyślny).
+void switch_mode(){
+  buttonState = digitalRead(switch_button);
+  if (buttonState == HIGH && workmode == 0){
+    digitalWrite(defLED, HIGH);
+    delay(2000);
+    workmode = 1;
+  }
+  else if (buttonState == HIGH && workmode == 1){  
+    digitalWrite(farLED, HIGH);
+    delay(2000);
+    workmode = 2;
+  }
+  else if (buttonState == HIGH && workmode == 2){ // Włącza tryb 
+    digitalWrite(offLED, HIGH);
+    delay(2000);
+    workmode = 0;
+  }
 }
