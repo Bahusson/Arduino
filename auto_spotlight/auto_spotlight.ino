@@ -9,6 +9,8 @@
 #define offLED   7 // LED w trybie "wyłączony"
 //Guzik zmiany trybu
 #define switch_button 8
+//Wejście analogowe fotoresystora
+#define photoPin A1
 //Zegar czasu rzeczywistego DS1302
 #define DS1302_SCLK_PIN   11    // Arduino pin for the Serial Clock
 #define DS1302_IO_PIN     10    // Arduino pin for the Data I/O
@@ -20,7 +22,7 @@ int buttonState = 0;
 int saveddistance = 0;
 byte workmode = 0;
 byte lightround = 0;
-unsigned int minute = 60000; // minuta w milisekundach
+long minute = 60000; // minuta w milisekundach
 
 
 // Macros to convert the bcd values of the registers to normal
@@ -227,7 +229,6 @@ void setup() {
 void loop() {
   ds1302_struct rtc;
   char buffer[80];     // the code uses 70 characters.
-
   // Read all clock data at once (burst mode).
   DS1302_clock_burst_read( (uint8_t *) &rtc);
 
@@ -235,16 +236,16 @@ void loop() {
     bcd2bin( rtc.h24.Hour10, rtc.h24.Hour), \
     bcd2bin( rtc.Minutes10, rtc.Minutes), \
     bcd2bin( rtc.Seconds10, rtc.Seconds));
-  Serial.print(buffer);
+  //Serial.print(buffer);
 
   sprintf(buffer, "Date(day of month) = %d, Month = %d, " \
     "Day(day of week) = %d, Year = %d", \
     bcd2bin( rtc.Date10, rtc.Date), \
     bcd2bin( rtc.Month10, rtc.Month), \
     rtc.Day, \
-    2000 + bcd2bin( rtc.Year10, rtc.Year));
-  Serial.println( buffer);
-  //Serial.println(rtc.Seconds);
+    2000 + bcd2bin( rtc.Year10, rtc.Year));  
+  //Serial.println( buffer); 
+  
   switch_mode(); //Przełącznik trybu pracy
   if (workmode == 0){
     digitalWrite(offLED, HIGH);
@@ -258,15 +259,28 @@ void loop() {
     ultrasonic();
   }
   else if(workmode == 2){  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji
+    int photvalue = analogRead(photoPin);
+    Serial.print("light value: ");
+    Serial.println(photvalue);
     digitalWrite(farLED, HIGH);
     digitalWrite(offLED, LOW);
     digitalWrite(defLED, LOW);
-    if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
-      digitalWrite(lightPin, LOW);
-    }
-    else if(rtc.Seconds10 >= 1 && rtc.Seconds > 4){
-      digitalWrite(lightPin, HIGH);
-    }
+    if (photvalue < 150){
+     if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
+       digitalWrite(lightPin, LOW);
+     }
+     else if(rtc.Seconds10 >= 1 && rtc.Seconds > 4){
+       digitalWrite(lightPin, HIGH);
+       int extratime = random(9);
+       int somemore = random(9);
+       unsigned int andthensome = random(60000);
+       long totaldecoy = minute * (10 + extratime) + minute * somemore + andthensome;
+       byte workminutes = totaldecoy / 60000;
+       Serial.print("minutes of active decoy: ");
+       Serial.println(workminutes);
+       delay(1000); //Zaświeć się tyle co powyżej symulując pobyt w domu.
+     }
+   }
   }
   delay(1000);
 }
