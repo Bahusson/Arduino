@@ -10,7 +10,7 @@
 //Guzik zmiany trybu
 #define switch_button 8
 //Wejście analogowe fotoresystora
-#define photoPin A1
+#define photoPin A0
 //Zegar czasu rzeczywistego DS1302
 #define DS1302_SCLK_PIN   11    // Arduino pin for the Serial Clock
 #define DS1302_IO_PIN     10    // Arduino pin for the Data I/O
@@ -216,7 +216,7 @@ void setup() {
 #endif
 
   //Zainicjuj piny
-  randomSeed(analogRead(0)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
+  randomSeed(analogRead(1)); // Ziarno dla generatora liczb losowych z pina analogowego - input 0.
   pinMode(lightPin, OUTPUT);     // Wyjście na kanał lampy
   pinMode(trigPin, OUTPUT);      // Piny trigger i echo dla czujnika ruchu.
   pinMode(echoPin, INPUT);
@@ -269,7 +269,7 @@ void loop() {
      if(rtc.h24.Hour10 >= 2 && rtc.h24.Hour >= 3){
        digitalWrite(lightPin, LOW);
      }
-     else if(rtc.h24.Hour10 >= 1 && rtc.h24.Hour > 4){
+     else if(rtc.h24.Hour10 >= 1){
        digitalWrite(lightPin, HIGH);
        long totaldecoy = random(120000, 5400000); // Pomiędzy dwie minuty a półtorej godziny 
        /*int workminutes = totaldecoy / 60000;
