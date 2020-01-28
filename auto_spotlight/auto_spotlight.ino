@@ -22,7 +22,7 @@ int buttonState = 0;
 int saveddistance = 0;
 byte workmode = 0;
 byte lightround = 0;
-long minute = 60000; // minuta w milisekundach
+unsigned int minute = 60000; // minuta w milisekundach
 
 
 // Macros to convert the bcd values of the registers to normal
@@ -265,16 +265,13 @@ void loop() {
     digitalWrite(farLED, HIGH);
     digitalWrite(offLED, LOW);
     digitalWrite(defLED, LOW);
-    if (photvalue < 150){
-     if(rtc.Seconds10 >= 2 && rtc.Seconds >= 3){
+    if (photvalue < 350){ // 150 w produkcji to już mrok.
+     if(rtc.h24.Hour10 >= 2 && rtc.h24.Hour >= 3){
        digitalWrite(lightPin, LOW);
      }
-     else if(rtc.Seconds10 >= 1 && rtc.Seconds > 4){
+     else if(rtc.h24.Hour10 >= 1 && rtc.h24.Hour > 4){
        digitalWrite(lightPin, HIGH);
-       int extratime = random(9);
-       int somemore = random(9);
-       unsigned int andthensome = random(60000);
-       long totaldecoy = minute * (10 + extratime) + minute * somemore + andthensome;
+       long totaldecoy = random(0, 5400000);
        byte workminutes = totaldecoy / 60000;
        Serial.print("minutes of active decoy: ");
        Serial.println(workminutes);
