@@ -265,17 +265,25 @@ void loop() {
     digitalWrite(farLED, HIGH);
     digitalWrite(offLED, LOW);
     digitalWrite(defLED, LOW);
-    if (photvalue < 350){ // 150 w produkcji to już mrok.
+    if (photvalue < 150){ // 150 w produkcji to już mrok.
      if(rtc.h24.Hour10 >= 2 && rtc.h24.Hour >= 3){
        digitalWrite(lightPin, LOW);
      }
      else if(rtc.h24.Hour10 >= 1 && rtc.h24.Hour > 4){
        digitalWrite(lightPin, HIGH);
-       long totaldecoy = random(0, 5400000);
-       byte workminutes = totaldecoy / 60000;
+       long totaldecoy = random(120000, 5400000); // Pomiędzy dwie minuty a półtorej godziny 
+       /*int workminutes = totaldecoy / 60000;
        Serial.print("minutes of active decoy: ");
        Serial.println(workminutes);
-       delay(1000); //Zaświeć się tyle co powyżej symulując pobyt w domu.
+       delay(workminutes*100); //Zaświeć się na tyle co powyżej symulując pobyt w domu.*/
+       delay(totaldecoy);
+       digitalWrite(lightPin, LOW);
+       long totaldecoy_break = random(60000, 1500000); // Pomiędzy minutą a 25 minut
+       /*int breakminutes = totaldecoy_break / 60000;
+       Serial.print("minutes of break: ");
+       Serial.println(breakminutes);
+       delay(breakminutes*100); //Zaświeć światło na tyle co powyżej symulując pobyt w domu.*/
+       delay(totaldecoy_break);
      }
    }
   }
