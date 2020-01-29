@@ -13,7 +13,7 @@
 
 int waterval = 0;  // wartość poziomu wody
 int waterbeep = 0; // dzięki temu na żółtym poziomie wody beeper daje znać tylko raz.
-unsigned int minute = 60000; // minuta w milisekundach
+long minute = 60000; // minuta w milisekundach
 Servo breaker; // Stwórz obiekt serwo - przerywacz.
 byte state = 1;
 
@@ -37,7 +37,7 @@ void loop() {
   digitalWrite(water_switch, HIGH);
   waterval = analogRead(Waterlvl);
   Serial.println(waterval);
-  if (waterval <= 200) {
+  if (waterval >= 720) {
     Serial.println("Water Level: Empty");
     digitalWrite(R_LED, HIGH);
     digitalWrite(Y_LED, LOW);
@@ -47,7 +47,7 @@ void loop() {
     state = 1;
     w_sensor_off_();
   }
-  else if (waterval > 200 && waterval <= 500) {
+  else if (waterval < 720 && waterval >= 700) {
     Serial.println("Water Level: Medium");
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
@@ -59,7 +59,7 @@ void loop() {
     }
     w_sensor_off_();
   }
-  else if (waterval > 500) {
+  else if (waterval < 700) { // Przy starcie czysta woda ma ma konduktywność ~ 647.
     Serial.println("Water Level: High");
     digitalWrite(G_LED, HIGH);
     digitalWrite(R_LED, LOW);
@@ -119,5 +119,5 @@ void breaker_off() {
 //Tryb oszczędzania elektrody w czujniku poziomu wody
 void w_sensor_off_() {
   digitalWrite(water_switch, LOW);
-  delay(minute * 60); // Wyłącz czujnik na godzinę.
+  delay(minute * 15); // Wyłącz czujnik na kwadrans
 }
