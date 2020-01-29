@@ -23,6 +23,8 @@ int saveddistance = 0;
 byte workmode = 0;
 byte lightround = 0;
 unsigned int minute = 60000; // minuta w milisekundach
+byte lightstate = 0;
+long duration, distance;
 
 
 // Macros to convert the bcd values of the registers to normal
@@ -256,7 +258,7 @@ void loop() {
     digitalWrite(defLED, HIGH);
     digitalWrite(offLED, LOW);
     digitalWrite(farLED, LOW);
-    ultrasonic();
+    ultrasonic(10,4);
   }
   else if(workmode == 2){  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji
     int photvalue = analogRead(photoPin);
@@ -520,8 +522,8 @@ void _DS1302_togglewrite( uint8_t data, uint8_t release)
 }
 
 // Funkcja sprawdza czy ktoś siedzi przed komputerem.
-void ultrasonic() {
-  long duration, distance;
+// res1 - czułość gdy wyłączony, res2 - czułość gdy włączony.
+void ultrasonic(int res1, int res2) {
   Serial.print("Do 15: ");
   Serial.println(lightround);
   digitalWrite(trigPin, LOW);
@@ -531,7 +533,7 @@ void ultrasonic() {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
   distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
-  int res = 5; // Ustaw czułość
+  //int res = 5; // Ustaw czułość
   Serial.print(distance);
   Serial.println(" cm");
   byte lightstate = 0;
@@ -541,29 +543,15 @@ void ultrasonic() {
      lightstate = 0;
   }
   if (saveddistance > 0 && saveddistance < 400) {
-    if (saveddistance - distance >= res or saveddistance - distance <= -res){
-      digitalWrite(lightPin,HIGH);
-      lightround = 0;
-      lightstate = 1;
-      delay(1000); // W produkcji poczekaj minute*15 rund
+    if (lightstate == 0){
+      delay(5000);
+      roundcouter(res1);
     }
-    else{
-      lightround += 1;
-      delay(1000);
-      }
+    else if(lightstate == 1){
+      roundcouter(res2);
+    }
   }
- /* if (distance >= 400 || distance <= 0){
-   Serial.println(distance);
-   }
-  else {
-   Serial.print(distance);
-   Serial.println(" cm");
-   }*/
-  //delay(1000); // W produkcji sprawdzaj co minute/2?
-  if (lightstate == 0){
-    delay(5000); //Jeśli jest wyłączony to niech oszczędza detektor i sprawdza odległość tylko co 5sek.
-  }
-  saveddistance = distance;
+ saveddistance = distance;
 }
 
 // Przełączanie trybów pracy jednym guzikiem
@@ -586,3 +574,16 @@ void switch_mode(){
     workmode = 0;
   }
 }
+
+void roundcouter(int res){
+  if (saveddistance - distance >= res or saveddistance - distance <= -res){
+    digitalWrite(lightPin,HIGH);
+    lightround = 0;
+    lightstate = 1;
+    delay(1000); // W produkcji poczekaj minute*15 rund
+  }
+  else{
+    lightround += 1;
+    delay(1000);
+    }
+  }
