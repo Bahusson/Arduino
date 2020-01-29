@@ -274,17 +274,9 @@ void loop() {
      else if(rtc.h24.Hour10 >= 1){
        digitalWrite(lightPin, HIGH);
        long totaldecoy = random(120000, 5400000); // Pomiędzy dwie minuty a półtorej godziny 
-       /*int workminutes = totaldecoy / 60000;
-       Serial.print("minutes of active decoy: ");
-       Serial.println(workminutes);
-       delay(workminutes*100); //Zaświeć się na tyle co powyżej symulując pobyt w domu.*/
        delay(totaldecoy);
        digitalWrite(lightPin, LOW);
        long totaldecoy_break = random(60000, 1500000); // Pomiędzy minutą a 25 minut
-       /*int breakminutes = totaldecoy_break / 60000;
-       Serial.print("minutes of break: ");
-       Serial.println(breakminutes);
-       delay(breakminutes*100); //Zaświeć światło na tyle co powyżej symulując pobyt w domu.*/
        delay(totaldecoy_break);
      }
    }
@@ -543,11 +535,11 @@ void ultrasonic(int res1, int res2) {
      lightstate = 0;
   }
   if (saveddistance > 0 && saveddistance < 400) {
-    if (lightstate == 0){
-      delay(5000);
+    if (lightstate == 1){
       roundcouter(res1);
     }
-    else if(lightstate == 1){
+    else if(lightstate == 0){
+      delay(4000);
       roundcouter(res2);
     }
   }
