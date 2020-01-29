@@ -249,29 +249,33 @@ void loop() {
   //Serial.println( buffer); 
   
   switch_mode(); //Przełącznik trybu pracy
-  if (workmode == 0){
+  if (workmode == 0){ // Domyślny tryb pracy po uruchomieniu. Tryb zerowy, nie robi nic.
     digitalWrite(offLED, HIGH);
     digitalWrite(defLED, LOW);
     digitalWrite(farLED, LOW);
+    digitalWrite(lightPin,LOW);
   }
-  if (workmode == 1){ 
+  if (workmode == 1){ // Tryb wykrywania obecności przy biurku.
     digitalWrite(defLED, HIGH);
     digitalWrite(offLED, LOW);
     digitalWrite(farLED, LOW);
     ultrasonic(10,4);
   }
-  else if(workmode == 2){  // Redukcja do godzin nocnych. Zmień na rtc.h24.Hour10 i rtc.h24.Hour w produckji
+  else if(workmode == 2){  // Symuluje bytność w domu w godzinach popołudniowo-wieczornych, jeśli jest słabe oświetlenie.
     int photvalue = analogRead(photoPin);
+    byte currhour = rtc.h24.Hour10 * 10 + rtc.h24.Hour;
+    Serial.print("hour is: ");
+    Serial.println(currhour);
     Serial.print("light value: ");
     Serial.println(photvalue);
     digitalWrite(farLED, HIGH);
     digitalWrite(offLED, LOW);
     digitalWrite(defLED, LOW);
     if (photvalue < 150){ // 150 w produkcji to już mrok.
-     if(rtc.h24.Hour10 >= 2 && rtc.h24.Hour >= 3){
+     if(currhour >= 22){ //Godzina graniczna dla ostatniego uruchomienia oświetlenia
        digitalWrite(lightPin, LOW);
      }
-     else if(rtc.h24.Hour10 >= 1){
+     else if(currhour >= 15){ //Godzina graniczna dla pierwszego uruchomienia oświetlenia
        digitalWrite(lightPin, HIGH);
        long totaldecoy = random(120000, 5400000); // Pomiędzy dwie minuty a półtorej godziny 
        delay(totaldecoy);
@@ -525,7 +529,6 @@ void ultrasonic(int res1, int res2) {
   digitalWrite(trigPin, LOW);
   duration = pulseIn(echoPin, HIGH); // Tyle czasu wracał ping.
   distance = (duration / 2) / 29.1; // Konwertujemy powyższą wartość na centymetry z prędkości dźwięku.
-  //int res = 5; // Ustaw czułość
   Serial.print(distance);
   Serial.println(" cm");
   byte lightstate = 0;
