@@ -22,8 +22,10 @@
 #define machLight   A4
 #define machButton  A5
 
+
 // Zmienne trzymające stan poszczególnych przycisków.
-int workState = 0;
+//int buttonState = 0;
+/*int workState = 0;
 int corrState = 0;
 int bath1State = 0;
 int gateState = 0;
@@ -31,7 +33,7 @@ int bath2State = 0;
 int kitchState = 0;
 int smallState = 0;
 int sleepState = 0;
-int machState = 0;
+int machState = 0;*/
 
 void setup() {
   // Przypisz piny związane z LEDami jako wyjścia.
@@ -52,8 +54,32 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-
+  // Umożliwia włączanie i wyłączanie wszystkich LEDów guzikami.
+  switch_light(workLight, workButton);
+  switch_light(corrLight, corrButton);
+  switch_light(bath1Light, bath1Button);
+  switch_light(gateLight, gateButton);
+  switch_light(bath2Light, bath2Button);
+  switch_light(kitchLight, kitchButton);
+  switch_light(smallLight, smallButton);
+  switch_light(sleepLight, sleepButton);
+  switch_light(machLight, machButton);
+  /* Pewnie da się to jakoś skrócić za pomocą 2 list
+   *  i pętli FOR. Jak będzie czas, to spróbuję, ale najpierw
+   *  hardware...*/
 }
 
-void 
+//Przełącznik LEDów
+void switch_light(int defLED, int switch_button) {
+  int ledState = digitalRead(defLED);
+  int buttonState = digitalRead(switch_button);
+  
+  if (buttonState == HIGH && ledState == LOW){
+    digitalWrite(defLED, HIGH);
+    delay(1000);
+  }
+  else if (buttonState == HIGH && ledState == HIGH){
+    digitalWrite(defLED, LOW);
+    delay(1000);
+  }
+}
