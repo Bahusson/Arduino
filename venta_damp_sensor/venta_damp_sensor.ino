@@ -1,5 +1,16 @@
 // Szkic dodaje inteligencji staremu niemieckiemu nawilżaczowi powietrza "Venta"
-// Napisany pod niepełnowartościwą (reklamacyjną) płytkę PRO Mini
+/* Napisany pod niepełnowartościwą (reklamacyjną) płytkę PRO Mini
+ * Problem z tym szkicem jest taki, że trzeba zastosować wartości absolutne przewodnictwa wody,
+ * zaś te za każdym razem są inne - zarówno na starcie (woda z kranu jest uzdatniana i nie zawsze ma idealne parametry,
+ * nie zawsze da się doczyścić sam nawilżacz, element mieszający pozbywa się z czasem kamienia itp., być może też sam
+ * czujnik zużywa się bardziej niż powinien, pomimo oprogramowania go na włączanie się raz na 15min).
+ * Alternatywą byłoby użycie sondy, ale tutaj jest problem z obracającym się elementem w środku urządzenia.
+ * Ostatecznie można dodać kontrolerowi jakąś kartę pamięci, żeby pamiętał z jakiej wartości startuje aż do 
+ * następnego ładowania i kombinować z wartościami relatywnymi, ale imho to trochę overkill.
+ * Można też olać pośrednią lampkę i zrobić tak, żeby się wyłączał przy uniwersalnej niskiej wartości, żeby
+ * tylko nie chodził na jałowym biegu, ale to trochę ryzyko, że będzie jakiś czas wzbijal kurz z tego co właśnie oczyścił,
+ * oraz, że właśnie będzie się tworzył dodatkowy osad.
+ */ 
 
 #include <Servo.h> //ściągnij bibliotekę obsługującą serwo
 
@@ -29,18 +40,17 @@ void setup() {
   ledblinks(Y_LED, 300, 1);
   ledblinks(R_LED, 300, 1);
   breaker_off();
-  breaker_on(); // Do usunięcia po testach przewodnictwa!!
+  //breaker_on(); // Do usunięcia po testach przewodnictwa!!
   buzz_buzz(3);
   digitalWrite(water_switch, HIGH);
-  //waterval = 1000; // Do kalibrowania serwa po wymianie przełącznika.
 }
 
 void loop() {
   digitalWrite(water_switch, HIGH);
   waterval = analogRead(Waterlvl);
   Serial.println(waterval);
-  if (waterval < 640) {
-    lock = 0;
+  if (waterval < 610) {
+    lock = 1;
     Serial.println("Water Level: Empty");
     digitalWrite(R_LED, HIGH);
     digitalWrite(Y_LED, LOW);
@@ -50,8 +60,7 @@ void loop() {
     state = 1;
     w_sensor_off_();
   }
-  else if (waterval >= 666) {// ~665 - 673 jak dosłownie "dotyka" górnej krawędzi czujnika.
-    // Top jest ~681 a potem spada wraz z poziomem wody.
+  else if (waterval >= 666) {
     Serial.println("Water Level: Medium");
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
@@ -64,7 +73,7 @@ void loop() {
     }
     w_sensor_off_();
   }
-  else if (waterval >= 640 && waterval < 666 && lock == 0) { // Przy starcie czysta woda ma ma konduktywność ~ 647.
+  else if (waterval >= 635 && waterval < 666 && lock == 0) {
     Serial.println("Water Level: High");
     digitalWrite(G_LED, HIGH);
     digitalWrite(R_LED, LOW);
