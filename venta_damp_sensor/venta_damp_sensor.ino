@@ -16,6 +16,7 @@ int waterbeep = 0; // dzięki temu na żółtym poziomie wody beeper daje znać 
 long minute = 60000; // minuta w milisekundach
 Servo breaker; // Stwórz obiekt serwo - przerywacz.
 byte state = 1;
+byte lock = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -28,6 +29,7 @@ void setup() {
   ledblinks(Y_LED, 300, 1);
   ledblinks(R_LED, 300, 1);
   breaker_off();
+  breaker_on(); // Do usunięcia po testach przewodnictwa!!
   buzz_buzz(3);
   digitalWrite(water_switch, HIGH);
   //waterval = 1000; // Do kalibrowania serwa po wymianie przełącznika.
@@ -37,7 +39,8 @@ void loop() {
   digitalWrite(water_switch, HIGH);
   waterval = analogRead(Waterlvl);
   Serial.println(waterval);
-  if (waterval >= 720) {
+  if (waterval < 640) {
+    lock = 0;
     Serial.println("Water Level: Empty");
     digitalWrite(R_LED, HIGH);
     digitalWrite(Y_LED, LOW);
@@ -47,11 +50,13 @@ void loop() {
     state = 1;
     w_sensor_off_();
   }
-  else if (waterval < 720 && waterval >= 700) {
+  else if (waterval >= 666) {// ~665 - 673 jak dosłownie "dotyka" górnej krawędzi czujnika.
+    // Top jest ~681 a potem spada wraz z poziomem wody.
     Serial.println("Water Level: Medium");
     digitalWrite(Y_LED, HIGH);
     digitalWrite(R_LED, LOW);
     digitalWrite(G_LED, LOW);
+    lock = 1;
     state = 1;
     if (waterbeep == 1) {
       buzz_buzz(1);
@@ -59,7 +64,7 @@ void loop() {
     }
     w_sensor_off_();
   }
-  else if (waterval < 700) { // Przy starcie czysta woda ma ma konduktywność ~ 647.
+  else if (waterval >= 640 && waterval < 666 && lock == 0) { // Przy starcie czysta woda ma ma konduktywność ~ 647.
     Serial.println("Water Level: High");
     digitalWrite(G_LED, HIGH);
     digitalWrite(R_LED, LOW);
