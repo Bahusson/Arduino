@@ -47,7 +47,7 @@ void setup() {
 
 void loop() {
   // Sprawia, że światło na guzikach nie miga jak ktoś zasłoni czujnik na chwilę. Tolerancja 10s.
-  if (lightbuffer > 50) {
+  if (lightbuffer > 1000) {
     switch_visible();
     lightbuffer = 0;
   }
@@ -87,7 +87,7 @@ void switch_visible() {
   int daytime = analogRead(lightSensor);
   // Jak się robi ciemno, to zapala diody przy guzikach,
   // żeby były łatwo widoczne i na odwrót.
-  if (daytime < 200) {
+  if (daytime > 200) {
     digitalWrite(buttonsLight, HIGH);
     delay(5);
   }
